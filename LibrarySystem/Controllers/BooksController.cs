@@ -121,9 +121,37 @@ namespace LibrarySystem.Controllers
             return NoContent();
         }
 
+
+        // ٍSearch
+        [HttpGet("search")]
+        public async Task<ActionResult<IEnumerable<BookDto>>> SearchBooks(string query)
+        {
+            if (string.IsNullOrEmpty(query))
+            {
+                return BadRequest("Search query cannot be empty");
+            }
+
+            var books = await _context.Books
+                .Where(b => b.Title.Contains(query) || b.Author.Contains(query))
+                .Include(b => b.Category)
+                .ToListAsync();
+
+            var bookDtos = books.Select(b => new BookDto
+            {
+                Id = b.Id,
+                Title = b.Title,
+                Author = b.Author,
+                Category = new CategoryDto { Id = b.Category.Id, Name = b.Category.Name }
+            }).ToList();
+
+            return Ok(bookDtos);
+        }
+
         private bool BookExists(int id)
         {
             return _context.Books.Any(e => e.Id == id);
         }
+
+
     }
 }
